@@ -1,30 +1,23 @@
 import cv2
 from fingertrack import HandDetector
 import time
-import os
 import sys
+
 print("Python path:", sys.executable)
 
-
-pTime = 0
+# Camera
 cap = cv2.VideoCapture(0)
 
-folderPath = r'images'   # ✅ change ONLY if path differs
-myList = os.listdir(folderPath)
-print("Images found:", myList)
-overlayList = []
-
-for imPath in myList:
-    image = cv2.imread(f"{folderPath}/{imPath}")
-    overlayList.append(image)
-
+pTime = 0
 detector = HandDetector()
 
 while True:
     success, img = cap.read()
     if not success:
+        print("Camera not detected")
         break
 
+    # Detect hand
     img = detector.findHands(img)
     lmList, bbox = detector.findPosition(img)
 
@@ -32,11 +25,7 @@ while True:
         fingers = detector.fingersUp()
         totalFingers = fingers.count(1)
 
-        # Prevent index error
-        if totalFingers < len(overlayList):
-            h, w, c = overlayList[totalFingers].shape
-            img[0:h, 0:w] = overlayList[totalFingers]
-
+        # Display finger count
         cv2.rectangle(img, (20, 225), (170, 425), (0, 255, 0), cv2.FILLED)
         cv2.putText(
             img,
@@ -48,8 +37,9 @@ while True:
             5
         )
 
+    # FPS calculation
     cTime = time.time()
-    fps = 1 / (cTime - pTime)
+    fps = 1 / (cTime - pTime) if cTime != pTime else 0
     pTime = cTime
 
     cv2.putText(
@@ -62,7 +52,9 @@ while True:
         3
     )
 
-    cv2.imshow("Image", img)
+    cv2.imshow("Finger Count", img)
+
+    # Press Q to exit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
